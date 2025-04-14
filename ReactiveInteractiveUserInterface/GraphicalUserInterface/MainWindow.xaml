@@ -5,14 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:TP.ConcurrentProgramming.Presentation.ViewModel;assembly=TP.ConcurrentProgramming.PresentationViewModel"
         mc:Ignorable="d"
-        Title="Presentation layer targeting reactive behaviour" Height="auto" Width="auto">
+        Title="Presentation layer targeting reactive behaviour"
+        Width="600" Height="600">
 
     <Window.DataContext>
         <vm:MainWindowViewModel/>
     </Window.DataContext>
 
-    <StackPanel>
-        <StackPanel Orientation="Horizontal" Margin="10">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Margin="10" Grid.Row="0">
             <TextBlock Text="Ball Amount:" VerticalAlignment="Center" Margin="0,0,10,0"/>
             <TextBox x:Name="BallCountTextBox" Width="50" Margin="0,0,10,0"
                      Text="{Binding Path=BallCount, UpdateSourceTrigger=PropertyChanged}"/>
@@ -20,25 +26,29 @@
                     Command="{Binding StartCommand}" CommandParameter="{Binding Text, ElementName=BallCountTextBox}"/>
         </StackPanel>
 
-        <Border BorderThickness="4" BorderBrush="Green" Height="420" Width="400">
-            <ItemsControl ItemsSource="{Binding Balls}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <Canvas />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="Blue"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-                <ItemsControl.ItemContainerStyle>
-                    <Style TargetType="ContentPresenter">
-                        <Setter Property="Canvas.Left" Value="{Binding Left}"/>
-                        <Setter Property="Canvas.Top" Value="{Binding Top}"/>
-                    </Style>
-                </ItemsControl.ItemContainerStyle>
-            </ItemsControl>
-        </Border>
-    </StackPanel>
+        <Viewbox Stretch="Uniform" Grid.Row="1" Margin="10">
+            <Border BorderThickness="4" BorderBrush="Green" Width="420" Height="400">
+                <Canvas Width="420" Height="400">
+                    <ItemsControl ItemsSource="{Binding Balls}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <Canvas />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Ellipse Width="{Binding Diameter}" Height="{Binding Diameter}" Fill="Blue"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Canvas.Left" Value="{Binding Left}"/>
+                                <Setter Property="Canvas.Top" Value="{Binding Top}"/>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                    </ItemsControl>
+                </Canvas>
+            </Border>
+        </Viewbox>
+    </Grid>
 </Window>
