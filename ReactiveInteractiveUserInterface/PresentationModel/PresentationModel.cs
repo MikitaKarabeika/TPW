@@ -20,6 +20,9 @@ namespace TP.ConcurrentProgramming.Presentation.Model
   /// </summary>
   internal class ModelImplementation : ModelAbstractApi
   {
+    private double fieldWidth;
+    private double fieldHeight;
+
     internal ModelImplementation() : this(null)
     { }
 
@@ -47,6 +50,12 @@ namespace TP.ConcurrentProgramming.Presentation.Model
     public override void Start(int numberOfBalls)
     {
       layerBellow.Start(numberOfBalls, StartHandler);
+    }
+
+    public override void UpdateFieldSize(double fieldWidth, double fieldHeight)
+    {
+        this.fieldWidth = fieldWidth;
+        this.fieldHeight = fieldHeight;
     }
 
     #endregion ModelAbstractApi
@@ -98,4 +107,5 @@ namespace TP.ConcurrentProgramming.Presentation.Model
   {
     public IBall Ball { get; init; }
   }
-}
+
+  }

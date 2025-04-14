@@ -11,6 +11,7 @@ using System;
 using System.Collections.ObjectModel;
 using TP.ConcurrentProgramming.Presentation.Model;
 using TP.ConcurrentProgramming.Presentation.ViewModel.MVVMLight;
+using TP.ConcurrentProgramming.Presentation.ViewModel;
 using ModelIBall = TP.ConcurrentProgramming.Presentation.Model.IBall;
 
 namespace TP.ConcurrentProgramming.Presentation.ViewModel
@@ -26,13 +27,29 @@ namespace TP.ConcurrentProgramming.Presentation.ViewModel
     {
       ModelLayer = modelLayerAPI == null ? ModelAbstractApi.CreateModel() : modelLayerAPI;
       Observer = ModelLayer.Subscribe<ModelIBall>(x => Balls.Add(x));
-    }
+            StartCommand = new RelayCommand(param =>
+            {
+                if (int.TryParse(param?.ToString(), out int numberOfBalls))
+                {
+                    Start(numberOfBalls);
+                }
+            },
+        param =>
+        {
+            if (int.TryParse(param?.ToString(), out int number))
+            {
+                return number >= 1 && number <= 20;
+            }
+            return false;
+        });
 
-    #endregion ctor
+        }
 
-    #region public API
+        #endregion ctor
 
-    public void Start(int numberOfBalls)
+        #region public API
+
+        public void Start(int numberOfBalls)
     {
       if (Disposed)
         throw new ObjectDisposedException(nameof(MainWindowViewModel));
@@ -43,6 +60,33 @@ namespace TP.ConcurrentProgramming.Presentation.ViewModel
     public ObservableCollection<ModelIBall> Balls { get; } = new ObservableCollection<ModelIBall>();
 
     #endregion public API
+    public RelayCommand StartCommand { get; }
+
+    //height width
+
+    private double fieldWidth;
+    public double FieldWidth
+    {
+        get => fieldWidth;
+        set
+        {
+            fieldWidth = value;
+            RaisePropertyChanged(nameof(FieldWidth));
+            ModelLayer.UpdateFieldSize(fieldWidth, fieldHeight);
+        }
+    }
+
+    private double fieldHeight;
+    public double FieldHeight
+    {
+        get => fieldHeight;
+        set
+        {
+            fieldHeight = value;
+            RaisePropertyChanged(nameof(FieldHeight));
+            ModelLayer.UpdateFieldSize(fieldWidth, fieldHeight);
+        }
+    }
 
     #region IDisposable
 
@@ -79,6 +123,8 @@ namespace TP.ConcurrentProgramming.Presentation.ViewModel
     private ModelAbstractApi ModelLayer;
     private bool Disposed = false;
 
-    #endregion private
-  }
+        #endregion private
+
+        
+    }
 }

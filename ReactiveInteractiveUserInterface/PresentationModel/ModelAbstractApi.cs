@@ -45,5 +45,7 @@ namespace TP.ConcurrentProgramming.Presentation.Model
     private static Lazy<ModelAbstractApi> modelInstance = new Lazy<ModelAbstractApi>(() => new ModelImplementation());
 
     #endregion private
+    public abstract void UpdateFieldSize(double fieldWidth, double fieldHeight);
+
   }
 }

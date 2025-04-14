@@ -19,11 +19,14 @@ namespace TP.ConcurrentProgramming.Presentation.Model
 {
   internal class ModelBall : IBall
   {
+    private ModelImplementation modelImplementation;
+
     public ModelBall(double top, double left, LogicIBall underneathBall)
     {
       TopBackingField = top;
       LeftBackingField = left;
       underneathBall.NewPositionNotification += NewPositionNotification;
+      this.modelImplementation = modelImplementation;
     }
 
     #region IBall
