@@ -41,6 +41,7 @@ namespace TP.ConcurrentProgramming.Data
 
     internal void Move(Vector delta)
     {
+
       Position = new Vector(Position.x + delta.x, Position.y + delta.y);
       RaiseNewPositionChangeNotification();
     }

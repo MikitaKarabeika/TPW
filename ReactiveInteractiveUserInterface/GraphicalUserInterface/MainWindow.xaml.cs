@@ -13,30 +13,48 @@ using TP.ConcurrentProgramming.Presentation.ViewModel;
 
 namespace TP.ConcurrentProgramming.PresentationView
 {
-  /// <summary>
-  /// View implementation
-  /// </summary>
-  public partial class MainWindow : Window
-  {
-    public MainWindow()
-    {
-      Random random = new Random();
-      InitializeComponent();
-      MainWindowViewModel viewModel = (MainWindowViewModel)DataContext;
-      double screenWidth = SystemParameters.PrimaryScreenWidth;
-      double screenHeight = SystemParameters.PrimaryScreenHeight;
-      viewModel.Start(random.Next(5, 10));
-    }
-
     /// <summary>
-    /// Raises the <seealso cref="System.Windows.Window.Closed"/> event.
+    /// View implementation
     /// </summary>
-    /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
-    protected override void OnClosed(EventArgs e)
+    public partial class MainWindow : Window
     {
-      if (DataContext is MainWindowViewModel viewModel)
-        viewModel.Dispose();
-      base.OnClosed(e);
+        private MainWindowViewModel viewModel;
+        public MainWindow()
+        {
+            InitializeComponent();
+            viewModel = new MainWindowViewModel();
+            DataContext = viewModel;
+        }
+
+        private void StartButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (int.TryParse(BallCountTextBox.Text, out int numberOfBalls))
+            {
+                if (numberOfBalls >= 1 && numberOfBalls <= 20)
+                {
+                    viewModel.Start(numberOfBalls);
+                    StartButton.IsEnabled = false;
+                }
+                else
+                {
+                    MessageBox.Show("Ball amount must be between 1 and 20.", "Invalid input", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
+            }
+            else
+            {
+                MessageBox.Show("Please enter a valid integer.", "Invalid input", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        /// <summary>
+        /// Raises the <seealso cref="System.Windows.Window.Closed"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="EventArgs"/> that contains the event data.</param>
+        protected override void OnClosed(EventArgs e)
+        {
+            if (DataContext is MainWindowViewModel viewModel)
+                viewModel.Dispose();
+            base.OnClosed(e);
+        }
     }
-  }
 }
