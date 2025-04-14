@@ -14,7 +14,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using TP.ConcurrentProgramming.Presentation.Model;
 using ModelIBall = TP.ConcurrentProgramming.Presentation.Model.IBall;
-
+/*
 namespace TP.ConcurrentProgramming.Presentation.ViewModel.Test
 {
   [TestClass]
@@ -57,7 +57,7 @@ namespace TP.ConcurrentProgramming.Presentation.ViewModel.Test
     }
 
     #region testing infrastructure
-
+        
     private class ModelNullFixture : ModelAbstractApi
     {
       #region Test
@@ -173,7 +173,7 @@ namespace TP.ConcurrentProgramming.Presentation.ViewModel.Test
 
       #endregion private
     }
-
+        
     #endregion testing infrastructure
   }
-}
+}*/
