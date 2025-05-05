@@ -39,61 +39,56 @@ namespace TP.ConcurrentProgramming.Data
     {
       NewPositionNotification?.Invoke(this, Position);
     }
+    internal void Move(Vector delta)
+    {
+        const double fieldWidth = 385;
+        const double fieldHeight = 405;
+        const double ballDiameter = 20;
+        const double ballRadius = ballDiameter / 2;
 
-        internal void Move(Vector delta)
+        double nextX = Position.x + delta.x;
+        double nextY = Position.y + delta.y;
+
+        double correctedX = Position.x;
+        double correctedY = Position.y;
+        Vector correctedVelocity = (Vector)Velocity;
+
+        if (nextX - ballRadius < 0)
         {
-            const double fieldWidth = 385;
-            const double fieldHeight = 405;
-            const double ballDiameter = 20;
-            const double ballRadius = ballDiameter / 2;
-
-            double nextX = Position.x + delta.x;
-            double nextY = Position.y + delta.y;
-
-            double correctedX = Position.x;
-            double correctedY = Position.y;
-            Vector correctedVelocity = (Vector)Velocity;
-
-            // Праверка па X
-            if (nextX - ballRadius < 0)
-            {
-                correctedX = ballRadius;
-                correctedVelocity = new Vector(0, correctedVelocity.y);
-            }
-            else if (nextX + ballRadius > fieldWidth)
-            {
-                correctedX = fieldWidth - ballRadius;
-                correctedVelocity = new Vector(0, correctedVelocity.y);
-            }
-            else
-            {
-                correctedX = nextX;
-            }
-
-            // Праверка па Y
-            if (nextY - ballRadius < 0)
-            {
-                correctedY = ballRadius;
-                correctedVelocity = new Vector(correctedVelocity.x, 0);
-            }
-            else if (nextY + ballRadius > fieldHeight)
-            {
-                correctedY = fieldHeight - ballRadius;
-                correctedVelocity = new Vector(correctedVelocity.x, 0);
-            }
-            else
-            {
-                correctedY = nextY;
-            }
-
-            // Абнаўляем становішча і хуткасць
-            Position = new Vector(correctedX, correctedY);
-            Velocity = correctedVelocity;
-
-            // Пасылаем паведамленне пра новую пазіцыю
-            RaiseNewPositionChangeNotification();
+            correctedX = ballRadius;
+            correctedVelocity = new Vector(0, correctedVelocity.y);
+        }
+        else if (nextX + ballRadius > fieldWidth)
+        {
+            correctedX = fieldWidth - ballRadius;
+            correctedVelocity = new Vector(0, correctedVelocity.y);
+        }
+        else
+        {
+            correctedX = nextX;
         }
 
-        #endregion private
+        if (nextY - ballRadius < 0)
+        {
+            correctedY = ballRadius;
+            correctedVelocity = new Vector(correctedVelocity.x, 0);
+        }
+        else if (nextY + ballRadius > fieldHeight)
+        {
+            correctedY = fieldHeight - ballRadius;
+            correctedVelocity = new Vector(correctedVelocity.x, 0);
+        }
+        else
+        {
+            correctedY = nextY;
+        }
+
+        Position = new Vector(correctedX, correctedY);
+        Velocity = correctedVelocity;
+
+        RaiseNewPositionChangeNotification();
+    }
+
+    #endregion private
     }
 }
