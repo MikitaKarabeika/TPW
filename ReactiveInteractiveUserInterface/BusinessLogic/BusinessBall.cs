@@ -10,31 +10,17 @@
 
 using System.Numerics;
 using TP.ConcurrentProgramming.Data;
+using BisAPI = TP.ConcurrentProgramming.BusinessLogic.BusinessLogicAbstractAPI;
 
 namespace TP.ConcurrentProgramming.BusinessLogic
 {
   internal class Ball : IBall
   {
-    private const double Diameter = 20;
-    private const double FieldWidth = 420;
-    private const double FieldHeight = 400;
     private const double Margin = 8;
-        public Ball(Data.IBall ball)
+    public Ball(Data.IBall ball)
     {
       ball.NewPositionNotification += RaisePositionChangeEvent;
-    }/*
-    public class VectorAdapter : IVector
-    {
-        public double x { get; init; }
-        public double y { get; init; }
-
-        public VectorAdapter(double x, double y)
-        {
-            this.x = x;
-            this.y = y;
-        }
-    }*/
-
+    }
     private IVector CreateVector(double x, double y)
     {
         return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
@@ -48,8 +34,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic
     {
         if (sender is Data.IBall dataBall)
         {
-            bool isXOut = e.x < 0 || e.x > FieldWidth - Diameter - Margin;
-            bool isYOut = e.y < 0 || e.y > FieldHeight - Diameter - Margin;
+            bool isXOut = e.x < 0 || e.x > BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
+            bool isYOut = e.y < 0 || e.y > BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin;
 
             if (isXOut || isYOut)
             {
@@ -59,8 +45,9 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                 );
             }
 
-            double boundedX = Math.Clamp(e.x, 0, FieldWidth - Diameter - Margin);
-            double boundedY = Math.Clamp(e.y, 0, FieldHeight - Diameter - Margin);
+            double boundedX = Math.Clamp(e.x, 0, BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin);
+            double boundedY = Math.Clamp(e.y, 0, BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin);
+
             NewPositionNotification?.Invoke(this, new Position(boundedX, boundedY));
         }
     }

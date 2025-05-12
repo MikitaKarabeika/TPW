@@ -29,6 +29,7 @@ namespace TP.ConcurrentProgramming.Data
     public event EventHandler<IVector>? NewPositionNotification;
 
     public IVector Velocity { get; set; }
+    public double Mass { get; }
 
     #endregion IBall
 
@@ -36,7 +37,7 @@ namespace TP.ConcurrentProgramming.Data
 
     private Vector Position;
 
-    public double Mass { get; init; }
+    private readonly object _lock = new object();
 
     private void RaiseNewPositionChangeNotification()
     {
