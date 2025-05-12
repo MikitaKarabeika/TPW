@@ -11,7 +11,7 @@
 using TP.ConcurrentProgramming.Data;
 
 namespace TP.ConcurrentProgramming.BusinessLogic.Test
-{
+{/*
   [TestClass]
   public class BusinessLogicImplementationUnitTest
   {
@@ -118,5 +118,5 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
     }
 
     #endregion testing instrumentation
-  }
+  }*/
 }

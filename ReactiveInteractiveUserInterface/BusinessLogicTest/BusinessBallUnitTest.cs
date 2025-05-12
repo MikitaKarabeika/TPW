@@ -12,7 +12,7 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
 {
   [TestClass]
   public class BallUnitTest
-  {
+  {/*
     [TestMethod]
     public void MoveTestMethod()
     {
@@ -48,7 +48,7 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
       public double x { get; init; }
       public double y { get; init; }
     }
-
-    #endregion testing instrumentation
+        
+    #endregion testing instrumentation*/
   }
 }

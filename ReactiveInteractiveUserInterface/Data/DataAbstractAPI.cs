@@ -56,8 +56,13 @@ namespace TP.ConcurrentProgramming.Data
 
   public interface IBall
   {
+        
     event EventHandler<IVector> NewPositionNotification;
     double Mass { get; }
     IVector Velocity { get; set; }
-  }
+    IVector CurrentPosition { get; }
+
+        void ContactBall(IBall otherBall);
+
+    }
 }
