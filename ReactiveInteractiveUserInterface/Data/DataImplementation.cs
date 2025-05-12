@@ -38,7 +38,7 @@ namespace TP.ConcurrentProgramming.Data
         Vector startingPosition = new(random.Next(100, 400 - 100), random.Next(100, 400 - 100));
         double mass = random.Next(1, 10);
         
-        double speed = random.Next(1, 3);
+        double speed = random.Next(3, 7);
 
         Vector startingVelocity = new Vector(
             (RandomGenerator.NextDouble() - 0.5)*speed,
@@ -91,7 +91,12 @@ namespace TP.ConcurrentProgramming.Data
     private void Move(object? x)
     {
       foreach (Ball item in BallsList)
-        item.Move(new Vector((RandomGenerator.NextDouble() - 0.5) * 4, (RandomGenerator.NextDouble() - 0.5) * 4));
+        item.Move();
+    }
+
+    public override IVector CreateVector(double x, double y)
+    {
+        return new Vector(x, y);
     }
 
     #endregion private

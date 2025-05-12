@@ -30,6 +30,7 @@ namespace TP.ConcurrentProgramming.Data
     #region IDisposable
 
     public abstract void Dispose();
+    public abstract IVector CreateVector(double x, double y);
 
     #endregion IDisposable
 
@@ -56,7 +57,7 @@ namespace TP.ConcurrentProgramming.Data
   public interface IBall
   {
     event EventHandler<IVector> NewPositionNotification;
-    //double Mass { get; init; }
+    double Mass { get; init; }
     IVector Velocity { get; set; }
   }
 }
