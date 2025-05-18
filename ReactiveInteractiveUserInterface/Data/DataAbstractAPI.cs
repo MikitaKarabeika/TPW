@@ -62,7 +62,5 @@ namespace TP.ConcurrentProgramming.Data
     IVector Velocity { get; set; }
     IVector CurrentPosition { get; }
 
-        void ContactBall(IBall otherBall);
-
-    }
+  }
 }

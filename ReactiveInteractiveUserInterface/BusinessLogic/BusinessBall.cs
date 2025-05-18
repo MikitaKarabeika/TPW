@@ -26,8 +26,6 @@ namespace TP.ConcurrentProgramming.BusinessLogic
         private Position _currentPosition;
         public Position CurrentPosition => _currentPosition;
 
-
-
         private const double Margin = 8;
         public Ball(Data.IBall ball)
         {
@@ -36,6 +34,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic
             Balls.Add(this);
             ball.NewPositionNotification += RaisePositionChangeEvent;
         }
+
+        
         private IVector CreateVector(double x, double y)
         {
             return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
@@ -45,10 +45,37 @@ namespace TP.ConcurrentProgramming.BusinessLogic
 
         public event EventHandler<IPosition>? NewPositionNotification;
 
+        private readonly object _lock = new();
         private void RaisePositionChangeEvent(object? sender, Data.IVector e)
         {
             if (sender is Data.IBall dataBall)
             {
+                _currentPosition = new Position(e.x, e.y);
+
+                double diameter = BisAPI.GetDimensions.BallDimension;
+                double collisionDistance = diameter * diameter;
+
+                Parallel.ForEach(Balls, other =>
+                {
+                    if (ReferenceEquals(this, other)) return;
+
+                    if (other.CurrentPosition is null) return;
+
+                    var key = _hash < other._hash ? (_hash, other._hash) : (other._hash, _hash);
+                    double dx = _currentPosition.x - other.CurrentPosition.x;
+                    double dy = _currentPosition.y - other.CurrentPosition.y;
+                    double distSq = dx * dx + dy * dy;
+
+                    if ((distSq < collisionDistance) && (InCollision.TryAdd(key, true)))
+                    {
+                        BallCollision(_inner, other._inner);
+                    }
+                    else
+                    {
+                        InCollision.TryRemove(key, out _);
+                    }
+                });
+
                 bool isXOut = e.x < 0 || e.x > BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
                 bool isYOut = e.y < 0 || e.y > BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin;
 
@@ -59,95 +86,137 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                         isYOut ? -dataBall.Velocity.y : dataBall.Velocity.y
                     );
                 }
+                /*
+                double boundedX = e.x;
+                double boundedY = e.y;*/
+                /*
+                double boundedX = Math.Clamp(e.x, 0, BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin);
+                double boundedY = Math.Clamp(e.y, 0, BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin);*/
+
+                //_currentPosition = new Position(boundedX, boundedY);
 
                 double boundedX = Math.Clamp(e.x, 0, BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin);
                 double boundedY = Math.Clamp(e.y, 0, BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin);
 
                 _currentPosition = new Position(boundedX, boundedY);
 
-                double diameter = BisAPI.GetDimensions.BallDimension;
-                double collidsionDistance = diameter * diameter;
-
-                Parallel.ForEach(Balls, other =>
-                {
-                    if (ReferenceEquals(this, other)) return;
-
-                    if (other.CurrentPosition is null) return;
-
-                    var key = _hash < other._hash ? (_hash, other._hash) : (other._hash, _hash);
-                    double dx = e.x - other.CurrentPosition.x;
-                    double dy = e.y - other.CurrentPosition.y;
-                    double distSq = dx * dx + dy * dy;
-
-                    if (distSq < collidsionDistance)
-                    {
-                        if (InCollision.TryAdd(key, true))
-                        {
-                            _inner.ContactBall(other._inner);
-                        }
-                    }
-                    else
-                    {
-                        InCollision.TryRemove(key, out _);
-                    }
-                });
-
                 NewPositionNotification?.Invoke(this, _currentPosition);
             }
         }
-        private readonly object _lock = new();
-        /*
-        public void ContactBall(IBall otherBall)
+        
+        private void BallCollision(Data.IBall innerBall, Data.IBall otherBall)
         {
-            var other = (Ball)otherBall; // Rzutowanie do konkretnej klasy aby uzyskać dostęp do jej pól
+            if (innerBall == null || otherBall == null) return;
 
-            int h1 = RuntimeHelpers.GetHashCode(this); // Aby uniknąć zakleszczenia ustawiamy kolejność blokad na podstawie hashcode'ów
-            int h2 = RuntimeHelpers.GetHashCode(other);
-            var first = h1 < h2 ? this : other;
-            var second = first == this ? other : this;
+            Ball firstBall = Balls.FirstOrDefault(b => b._inner == innerBall);
+            Ball secondBall = Balls.FirstOrDefault(b => b._inner == otherBall);
+            if (firstBall == null || secondBall == null) return;
 
-            lock (first._lock) // Blokujemy oba obiekty przed modyfikacją wspólnych danych.
-                lock (second._lock)
+            bool lockFirstFirst = firstBall.GetHashCode() < secondBall.GetHashCode();
+            var firstToLock = lockFirstFirst ? firstBall : secondBall;
+            var secondToLock = lockFirstFirst ? secondBall : firstBall;
+
+            lock (firstToLock._lock)
+            {
+                lock (secondToLock._lock)
                 {
-                    var posA = this.Position; // Pobieramy pozycje obu kul
-                    var posB = other.Position;
-                    var velA = this.Velocity;
-                    var velB = other.Velocity;
+                    var posA = innerBall.CurrentPosition;
+                    var posB = otherBall.CurrentPosition;
+                    var velA = innerBall.Velocity;
+                    var velB = otherBall.Velocity;
 
-                    double mA = this.Mass; // Masy każdej kuli i współczynnik sprężystości (e = 1 = idealnie sprężyste)
-                    double mB = other.Mass;
-                    double e = 1.0;
-
-                    double dx = posA.x - posB.x; // Obliczamy wektor od środka B do środka A i jego długość
+                    double dx = posA.x - posB.x;
                     double dy = posA.y - posB.y;
-                    double dist = Math.Sqrt(dx * dx + dy * dy);
+                    double distanceSquared = dx * dx + dy * dy;
+                    double minDistance = BisAPI.GetDimensions.BallDimension;
+                    double minDistanceSquared = minDistance * minDistance;
 
-                    if (dist == 0) return;// Jeśli kule są dokładnie na sobie, pomijamy dalsze kroki
+                    if (distanceSquared > minDistanceSquared) return;
 
-                    double nx = dx / dist; // Normalizujemy wektor do osi zderzenia
-                    double ny = dy / dist;
+                    double distance = Math.Sqrt(distanceSquared);
+                    double nx = dx / distance;
+                    double ny = dy / distance;
 
-                    double rvx = velA.x - velB.x; // Obliczamy komponent prędkości względnej wzdłuż normalnej:
+                    double rvx = velA.x - velB.x;
                     double rvy = velA.y - velB.y;
-                    double vAlong = rvx * nx + rvy * ny;
-                    if (vAlong >= 0) return; // Jeśli komponent >= 0, kule się oddalają, więc brak reakcji
+                    double velocityAlongNormal = rvx * nx + rvy * ny;
 
-                    double j = -(1 + e) * vAlong / (1.0 / mA + 1.0 / mB); // Obliczamy skalarny impuls j wg wzoru:
-                                                                          //    j = -(1 + e) * (v_rel · n) / (1/mA + 1/mB)
-                    double ix = j * nx; // Składowa impulsu osi x
-                    double iy = j * ny; // Składowa impulsu osi y
+                    if (velocityAlongNormal > 0) return;
 
-                    velA = new Vector(velA.x + ix / mA, velA.y + iy / mA); // Aktualizujemy prędkości obu kul:
-                    velB = new Vector(velB.x - ix / mB, velB.y - iy / mB); // vA' = vA + (j/mA)*n,  vB' = vB - (j/mB)*n
-                    this.Velocity = velA;
-                    other.Velocity = velB;
+                    double impulse = -2 * velocityAlongNormal / (1 / innerBall.Mass + 1 / otherBall.Mass);
 
-                    this.Move(); // Używamy move() aby zaktualizować pozycję obu kulek
-                    other.Move();
+                    double ix = impulse * nx;
+                    double iy = impulse * ny;
+
+                    bool isInnerBallNearVerticalWall = innerBall.CurrentPosition.x == 0 || innerBall.CurrentPosition.x == BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
+                    bool isOtherBallNearVerticalWall = otherBall.CurrentPosition.x == 0 || otherBall.CurrentPosition.x == BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
+
+                    bool isInnerBallNearHorizontalWall = innerBall.CurrentPosition.y == 0 || innerBall.CurrentPosition.y == BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
+                    bool isOtherBallNearHorizontalWall = otherBall.CurrentPosition.y == 0 || otherBall.CurrentPosition.y == BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
+                    /*
+                    bool isInnerBallNearVerticalWall = (innerBall.CurrentPosition.x >= 0) && (innerBall.CurrentPosition.x <= 2) || (innerBall.CurrentPosition.x <= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin) && (innerBall.CurrentPosition.x >= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin - 2);
+                    bool isOtherBallNearVerticalWall = (otherBall.CurrentPosition.x >= 0) && (otherBall.CurrentPosition.x <= 2) || (otherBall.CurrentPosition.x <= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin) && (otherBall.CurrentPosition.x >= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin - 2);
+
+                    bool isInnerBallNearHorizontalWall = (innerBall.CurrentPosition.y >= 0) && (innerBall.CurrentPosition.y <= 2) || (innerBall.CurrentPosition.y <= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin) && (innerBall.CurrentPosition.y >= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin - 2);
+                    bool isOtherBallNearHorizontalWall = (otherBall.CurrentPosition.y >= 0) && (otherBall.CurrentPosition.y <= 2) || (otherBall.CurrentPosition.y <= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin) && (otherBall.CurrentPosition.y >= BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin - 2);*/
+                    /*
+                    if (isInnerBallNearVerticalWall)
+                    {
+                        Debug.WriteLine($"ContactBallisInnerBallNearVerticalWall ({_currentPosition.x}, {_currentPosition.y})");
+                        innerBall.Velocity = CreateVector(
+                            0,
+                            velA.y + iy / innerBall.Mass);
+
+                        otherBall.Velocity = CreateVector(
+                            -1 * otherBall.Velocity.x,
+                            velB.y - iy / otherBall.Mass);
+                    }
+                    else if (isInnerBallNearHorizontalWall)
+                    {
+                        Debug.WriteLine($"ContactBallisInnerBallNearHorizontalWall ({_currentPosition.x}, {_currentPosition.y})");
+                        innerBall.Velocity = CreateVector(
+                            velA.x + ix / innerBall.Mass,
+                            0);
+
+                        otherBall.Velocity = CreateVector(
+                            velB.x - ix / otherBall.Mass,
+                            -1 * otherBall.Velocity.y);
+                    }
+                    else if (isOtherBallNearVerticalWall)
+                    {
+                        Debug.WriteLine($"ContactBallisOtherBallNearVerticalWall ({_currentPosition.x}, {_currentPosition.y})");
+                        innerBall.Velocity = CreateVector(
+                            -1 * innerBall.Velocity.x,
+                            velA.y + iy / innerBall.Mass);
+
+                        otherBall.Velocity = CreateVector(
+                            0,
+                            velB.y - iy / otherBall.Mass);
+                    }
+                    else if (isOtherBallNearHorizontalWall)
+                    {
+                        Debug.WriteLine($"ContactBallisOtherBallNearHorizontalWall ({_currentPosition.x}, {_currentPosition.y})");
+                        innerBall.Velocity = CreateVector(
+                            velA.x + ix / innerBall.Mass,
+                            -1 * innerBall.Velocity.y);
+
+                        otherBall.Velocity = CreateVector(
+                            velB.x - ix / otherBall.Mass,
+                            0);
+                    }
+                    else
+                    {*/
+                        innerBall.Velocity = CreateVector(
+                            velA.x + ix / innerBall.Mass,
+                            velA.y + iy / innerBall.Mass);
+
+                        otherBall.Velocity = CreateVector(
+                            velB.x - ix / otherBall.Mass,
+                            velB.y - iy / otherBall.Mass);
+                    //}
                 }
-
+            }
         }
-        */
 
         #endregion private
     }

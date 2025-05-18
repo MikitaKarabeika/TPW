@@ -8,10 +8,12 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using TP.ConcurrentProgramming.Data;
 
 namespace TP.ConcurrentProgramming.BusinessLogic.Test
-{/*
+{
   [TestClass]
   public class BusinessLogicImplementationUnitTest
   {
@@ -67,7 +69,12 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
       public override void Dispose()
       { }
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+    public override IVector CreateVector(double x, double y)
+    {
+        return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
+    }
+
+    public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
       {
         throw new NotImplementedException();
       }
@@ -82,7 +89,12 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
         Disposed = true;
       }
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+    public override IVector CreateVector(double x, double y)
+    {
+        return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
+    }
+
+    public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
       {
         throw new NotImplementedException();
       }
@@ -93,10 +105,14 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
       internal bool StartCalled = false;
       internal int NumberOfBallseCreated = -1;
 
-      public override void Dispose()
+        public override IVector CreateVector(double x, double y)
+        {
+            return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
+        }
+            public override void Dispose()
       { }
 
-      public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
+            public override void Start(int numberOfBalls, Action<IVector, Data.IBall> upperLayerHandler)
       {
         StartCalled = true;
         NumberOfBallseCreated = numberOfBalls;
@@ -111,6 +127,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
 
       private class DataBallFixture : Data.IBall
       {
+        public Data.IVector CurrentPosition => throw new NotImplementedException();
+        public double Mass => throw new NotImplementedException();
         public IVector Velocity { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public event EventHandler<IVector>? NewPositionNotification = null;
@@ -118,5 +136,5 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
     }
 
     #endregion testing instrumentation
-  }*/
+  }
 }

@@ -14,7 +14,6 @@ namespace TP.ConcurrentProgramming.Data
 {
     internal class Ball : IBall
     {
-        int x = 0;
         #region ctor
 
         internal Ball(Vector initialPosition, Vector initialVelocity, double mass)
@@ -32,6 +31,8 @@ namespace TP.ConcurrentProgramming.Data
 
         public IVector Velocity { get; set; }
         public double Mass { get; }
+
+        public double velocityLength;
 
         #endregion IBall
 
@@ -57,7 +58,10 @@ namespace TP.ConcurrentProgramming.Data
             {
                 while (isMoving)
                 {
+                    velocityLength = Math.Sqrt(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
                     Move();
+
+                    //int delay = 100 / (int)velocityLength;
                     int delay = 10;
                     Thread.Sleep(delay);
                 }
@@ -68,60 +72,11 @@ namespace TP.ConcurrentProgramming.Data
             lock (_lock)
             {
                 Position = new Vector(Position.x + Velocity.x, Position.y + Velocity.y);
+                //Position = new Vector(Position.x + Velocity.x / velocityLength, Position.y + Velocity.y / velocityLength);
             }
             RaiseNewPositionChangeNotification();
         }
-
-        public void ContactBall(IBall otherBall)
-        {
-            var other = (Ball)otherBall;
-
-            int h1 = RuntimeHelpers.GetHashCode(this);
-            int h2 = RuntimeHelpers.GetHashCode(other);
-            var first = h1 < h2 ? this : other;
-            var second = first == this ? other : this;
-
-            lock (first._lock)
-                lock (second._lock)
-                {
-                    var posA = this.Position;
-                    var posB = other.Position;
-                    var velA = this.Velocity;
-                    var velB = other.Velocity;
-
-                    double mA = this.Mass;
-                    double mB = other.Mass;
-                    double e = 1.0;
-
-                    double dx = posA.x - posB.x;
-                    double dy = posA.y - posB.y;
-                    double dist = Math.Sqrt(dx * dx + dy * dy);
-
-                    if (dist == 0) return;
-
-                    double nx = dx / dist;
-                    double ny = dy / dist;
-
-                    double rvx = velA.x - velB.x;
-                    double rvy = velA.y - velB.y;
-                    double vAlong = rvx * nx + rvy * ny;
-                    if (vAlong >= 0) return; 
-
-                    double j = -(1 + e) * vAlong / (1.0 / mA + 1.0 / mB);
-                                                                        
-                    double ix = j * nx;
-                    double iy = j * ny;
-
-                    velA = new Vector(velA.x + ix / mA, velA.y + iy / mA);
-                    velB = new Vector(velB.x - ix / mB, velB.y - iy / mB);
-                    this.Velocity = velA;
-                    other.Velocity = velB;
-
-                    this.Move(); 
-                    other.Move();
-                }
-
-        }
+        
         #endregion private
     }
 }

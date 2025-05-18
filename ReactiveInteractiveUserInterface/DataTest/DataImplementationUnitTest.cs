@@ -44,7 +44,7 @@ namespace TP.ConcurrentProgramming.Data.Test
       Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Dispose());
       Assert.ThrowsException<ObjectDisposedException>(() => newInstance.Start(0, (position, ball) => { }));
     }
-
+        
     [TestMethod]
     public void StartTestMethod()
     {
