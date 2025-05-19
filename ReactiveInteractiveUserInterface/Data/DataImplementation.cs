@@ -37,11 +37,11 @@ namespace TP.ConcurrentProgramming.Data
             {
                 Vector startingPosition = new(random.Next(100, 400 - 100), random.Next(100, 400 - 100));
                 //double mass = random.Next(1, 10);
-                double mass = 5;
+                double mass = 10;
 
                 //double speed = random.Next(3, 9);
-                //double speed = random.Next(70, 100);
-                double speed = 3;
+                //double speed = random.Next(100, 150);
+                double speed = 160;
                 Vector startingVelocity = new Vector(
                     (RandomGenerator.NextDouble() - 0.5) * speed,
                     (RandomGenerator.NextDouble() - 0.5) * speed
@@ -53,24 +53,7 @@ namespace TP.ConcurrentProgramming.Data
 
                 newBall.StartMoving();
             }
-            /*
-            Ball newBallTest = new(new Vector(0,0), new Vector(1.5, 0), 5);
-            upperLayerHandler(new Vector(0, 0), newBallTest);
-            BallsList.Add(newBallTest);
-
-            newBallTest.StartMoving();
-
-            Ball newBallTest1 = new(new Vector(0, 372), new Vector(0, 1.5), 5);
-            upperLayerHandler(new Vector(0, 0), newBallTest1);
-            BallsList.Add(newBallTest1);
-
-            newBallTest1.StartMoving();
-
-            Ball newBallTest2 = new(new Vector(392, 372), new Vector(-1.5, 0), 5);
-            upperLayerHandler(new Vector(0, 0), newBallTest2);
-            BallsList.Add(newBallTest2);
-
-            newBallTest2.StartMoving();*/
+            
         }
 
         #endregion DataAbstractAPI

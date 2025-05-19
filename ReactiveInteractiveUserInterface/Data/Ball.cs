@@ -29,7 +29,27 @@ namespace TP.ConcurrentProgramming.Data
 
         public event EventHandler<IVector>? NewPositionNotification;
 
-        public IVector Velocity { get; set; }
+        public IVector Velocity
+        {
+            get
+            {
+                lock (_velocityLock)
+                {
+                    return _velocity;
+                }
+            }
+            set
+            {
+                lock (_velocityLock)
+                {
+                    _velocity = value;
+                }
+            }
+        }
+
+        private Vector Position;
+        public IVector CurrentPosition => Position;
+
         public double Mass { get; }
 
         public double velocityLength;
@@ -38,9 +58,11 @@ namespace TP.ConcurrentProgramming.Data
 
         #region private
 
-        private Vector Position;
-        public IVector CurrentPosition => Position;
-        
+
+        private Vector _position;
+        private IVector _velocity;
+        private readonly object _velocityLock = new object();
+
         private readonly object _lock = new object();
 
         private void RaiseNewPositionChangeNotification()
@@ -60,9 +82,7 @@ namespace TP.ConcurrentProgramming.Data
                 {
                     velocityLength = Math.Sqrt(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
                     Move();
-
-                    //int delay = 100 / (int)velocityLength;
-                    int delay = 10;
+                    int delay = 400 / (int)velocityLength;
                     Thread.Sleep(delay);
                 }
             }).Start();
@@ -71,8 +91,7 @@ namespace TP.ConcurrentProgramming.Data
         {
             lock (_lock)
             {
-                Position = new Vector(Position.x + Velocity.x, Position.y + Velocity.y);
-                //Position = new Vector(Position.x + Velocity.x / velocityLength, Position.y + Velocity.y / velocityLength);
+                Position = new Vector(Position.x + Velocity.x / velocityLength, Position.y + Velocity.y / velocityLength);
             }
             RaiseNewPositionChangeNotification();
         }
