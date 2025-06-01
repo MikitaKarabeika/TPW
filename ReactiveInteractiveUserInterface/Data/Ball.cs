@@ -8,6 +8,7 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 namespace TP.ConcurrentProgramming.Data
@@ -58,12 +59,10 @@ namespace TP.ConcurrentProgramming.Data
 
         #region private
 
-
-        private Vector _position;
         private IVector _velocity;
         private readonly object _velocityLock = new object();
 
-        private readonly object _lock = new object();
+        //private readonly object _lock = new object();
 
         private void RaiseNewPositionChangeNotification()
         {
@@ -78,24 +77,33 @@ namespace TP.ConcurrentProgramming.Data
         {
             new Thread(() =>
             {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                long previousTime = stopwatch.ElapsedMilliseconds;
+
                 while (isMoving)
                 {
+                    long currentTime = stopwatch.ElapsedMilliseconds;
+                    double deltaTime = (currentTime - previousTime) / 1000.0;
+                    previousTime = currentTime;
+
                     velocityLength = Math.Sqrt(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
-                    Move();
-                    int delay = 400 / (int)velocityLength;
-                    Thread.Sleep(delay);
+                    Move(deltaTime);
+
+                    Thread.Sleep(10);
                 }
             }).Start();
         }
-        private void Move()
+
+        private void Move(double deltaTime)
         {
-            lock (_lock)
-            {
-                Position = new Vector(Position.x + Velocity.x / velocityLength, Position.y + Velocity.y / velocityLength);
-            }
+            double dx = Velocity.x * deltaTime;
+            double dy = Velocity.y * deltaTime;
+
+            Position = new Vector(Position.x + dx, Position.y + dy);
             RaiseNewPositionChangeNotification();
         }
-        
+
         #endregion private
     }
 }
