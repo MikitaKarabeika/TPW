@@ -39,6 +39,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
           {
             NewPositionNotification?.Invoke(this, new VectorFixture(0.0, 0.0));
           }
+
+          public void SubmitSnapshotToLogger(string? comment = null) { }
         }
 
         private class VectorFixture : Data.IVector

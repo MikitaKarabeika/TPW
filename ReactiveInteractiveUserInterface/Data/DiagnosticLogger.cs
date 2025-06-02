@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Threading;
@@ -12,14 +9,20 @@ namespace TP.ConcurrentProgramming.Data
 {
     internal static class DiagnosticLogger
     {
-        private static readonly BlockingCollection<SnapshotSerializer.SerializedSnapshot> snapshotQueue = new(5000);
-        private static readonly Thread backgroundWriterThread;
-        private static readonly StreamWriter outputStream;
-        private static readonly SnapshotSerializer serializer = new();
-        private static readonly CancellationTokenSource cancelSource = new();
-
+        private static BlockingCollection<SnapshotSerializer.SerializedSnapshot> snapshotQueue = new(5000);
+        private static Thread? backgroundWriterThread;
+        private static StreamWriter? outputStream;
+        private static SnapshotSerializer serializer = new();
+        private static CancellationTokenSource? cancelSource;
+        private static bool isFinished = false;
         static DiagnosticLogger()
         {
+            InitializeLogger();
+        }
+        private static void InitializeLogger()
+        {
+            cancelSource = new CancellationTokenSource();
+
             string targetFile = Path.Combine(Path.GetDirectoryName(typeof(DiagnosticLogger).Assembly.Location)!, "ball_log.txt");
             outputStream = new StreamWriter(targetFile, append: true, encoding: Encoding.ASCII) { AutoFlush = true };
 
@@ -50,26 +53,41 @@ namespace TP.ConcurrentProgramming.Data
                 catch (OperationCanceledException) { }
                 finally
                 {
-                    outputStream.Flush();
+                    try { outputStream?.Flush(); } catch { }
                 }
             })
             {
                 IsBackground = true
             };
+
             backgroundWriterThread.Start();
+            isFinished = false;
         }
-        public static void Finish()
-        {
-            snapshotQueue.CompleteAdding();
-            cancelSource.Cancel();
-            backgroundWriterThread.Join();
-            outputStream.Dispose();
-            cancelSource.Dispose();
-        }
+
         public static void SubmitSnapshot(SnapshotSerializer.SerializedSnapshot snapshot)
         {
-            snapshotQueue.TryAdd(snapshot);
+            if (isFinished || snapshotQueue.IsAddingCompleted)
+                return;
+
+            try
+            {
+                snapshotQueue.TryAdd(snapshot);
+            }
+            catch (InvalidOperationException) { }
+        }
+
+        public static void Finish()
+        {
+            if (isFinished)
+                return;
+
+            isFinished = true;
+
+            try { snapshotQueue.CompleteAdding(); } catch { }
+            try { cancelSource?.Cancel(); } catch { }
+            try { backgroundWriterThread?.Join(); } catch { }
+            try { outputStream?.Dispose(); } catch { }
+            try { cancelSource?.Dispose(); } catch { }
         }
     }
 }
-
