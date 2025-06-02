@@ -67,6 +67,7 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                     if ((distSq < collisionDistance) && (InCollision.TryAdd(key, true)))
                     {
                         BallCollision(_inner, other._inner);
+                        _inner.SubmitSnapshotToLogger("Ball Collided with Ball#" + other._inner.GetHashCode());
                     }
                     else
                     {
@@ -76,13 +77,14 @@ namespace TP.ConcurrentProgramming.BusinessLogic
 
                 bool isXOut = e.x < 0 || e.x > BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
                 bool isYOut = e.y < 0 || e.y > BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin;
-
+                
                 if (isXOut || isYOut)
                 {
                     dataBall.Velocity = CreateVector(
                         isXOut ? -dataBall.Velocity.x : dataBall.Velocity.x,
                         isYOut ? -dataBall.Velocity.y : dataBall.Velocity.y
                     );
+                    dataBall.SubmitSnapshotToLogger("Ball Collided with the Wall");
                 }
 
                 double boundedX = Math.Clamp(e.x, 0, BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin);

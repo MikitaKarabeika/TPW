@@ -9,7 +9,8 @@
 //_____________________________________________________________________________________________________________________________________
 
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
+using System.IO;
+using TP.ConcurrentProgramming.Data.Diagnostics;
 
 namespace TP.ConcurrentProgramming.Data
 {
@@ -22,6 +23,8 @@ namespace TP.ConcurrentProgramming.Data
             Position = initialPosition;
             Velocity = initialVelocity;
             Mass = mass;
+
+            SubmitSnapshotToLogger("Ball created");
         }
 
         #endregion ctor
@@ -61,18 +64,19 @@ namespace TP.ConcurrentProgramming.Data
 
         private IVector _velocity;
         private readonly object _velocityLock = new object();
-
-        //private readonly object _lock = new object();
+        private readonly object _stateLock = new object();
+        private volatile bool isMoving = true;
 
         private void RaiseNewPositionChangeNotification()
         {
             NewPositionNotification?.Invoke(this, Position);
         }
-        private volatile bool isMoving = true;
+
         internal void Stop()
         {
             isMoving = false;
         }
+
         internal void StartMoving()
         {
             new Thread(() =>
@@ -99,14 +103,33 @@ namespace TP.ConcurrentProgramming.Data
 
         private void Move(double deltaTime)
         {
-            double dx = Velocity.x * deltaTime;
-            double dy = Velocity.y * deltaTime;
+            Vector currentVelocity, newPosition;
+            lock (_stateLock)
+            {
+                currentVelocity = (Vector)Velocity;
+                newPosition = new Vector(
+                    Position.x + currentVelocity.x * deltaTime,
+                    Position.y + currentVelocity.y * deltaTime
+                );
+                Position = newPosition;
+            }
 
-            Position = new Vector(Position.x + dx, Position.y + dy);
-
-            Logger.Log($"Time: {DateTime.Now:HH:mm:ss.fff}, Ball@{GetHashCode()} Pos=({Position.x:F2}, {Position.y:F2}) Vel=({Velocity.x:F2}, {Velocity.y:F2})");
+            SubmitSnapshotToLogger();
 
             RaiseNewPositionChangeNotification();
+        }
+
+        public void SubmitSnapshotToLogger(string? comment = null)
+        {
+            DiagnosticLogger.SubmitSnapshot(new SnapshotSerializer.SerializedSnapshot(
+                ballId: GetHashCode(),
+                measurementTime: DateTime.UtcNow,
+                positionX: Position.x,
+                positionY: Position.y,
+                velocityX: Velocity.x,
+                velocityY: Velocity.y,
+                comment: comment
+            ));
         }
 
         #endregion private

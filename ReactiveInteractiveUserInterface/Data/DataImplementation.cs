@@ -32,6 +32,13 @@ namespace TP.ConcurrentProgramming.Data
                 throw new ObjectDisposedException(nameof(DataImplementation));
             if (upperLayerHandler == null)
                 throw new ArgumentNullException(nameof(upperLayerHandler));
+
+            string logPath = Path.Combine(Path.GetDirectoryName(typeof(DiagnosticLogger).Assembly.Location)!, "ball_log.txt");
+            if (File.Exists(logPath))
+            {
+                try { File.WriteAllText(logPath, string.Empty); } catch { }
+            }
+
             Random random = new Random();
             for (int i = 0; i < numberOfBalls; i++)
             {
@@ -72,7 +79,7 @@ namespace TP.ConcurrentProgramming.Data
                     }
                     BallsList.Clear();
 
-                    Logger.Stop();
+                    DiagnosticLogger.Finish();
                 }
                 Disposed = true;
             }
