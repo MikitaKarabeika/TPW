@@ -119,7 +119,7 @@ namespace TP.ConcurrentProgramming.Data
             RaiseNewPositionChangeNotification();
         }
 
-        public void SubmitSnapshotToLogger(string? comment = null)
+        private void SubmitSnapshotToLogger(string? comment = null)
         {
             DiagnosticLogger.SubmitSnapshot(new SnapshotSerializer.SerializedSnapshot(
                 ballId: GetHashCode(),

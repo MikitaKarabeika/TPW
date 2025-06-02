@@ -61,7 +61,7 @@ namespace TP.ConcurrentProgramming.Data
     double Mass { get; }
     IVector Velocity { get; set; }
     IVector CurrentPosition { get; }
-    void SubmitSnapshotToLogger(string? comment = null);
+    //void SubmitSnapshotToLogger(string? comment = null);
 
   }
 }
