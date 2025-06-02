@@ -71,6 +71,8 @@ namespace TP.ConcurrentProgramming.Data
                         ball.Stop();
                     }
                     BallsList.Clear();
+
+                    Logger.Stop();
                 }
                 Disposed = true;
             }

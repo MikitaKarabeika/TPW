@@ -80,11 +80,13 @@ namespace TP.ConcurrentProgramming.Data
                 Stopwatch stopwatch = new Stopwatch();
                 stopwatch.Start();
                 long previousTime = stopwatch.ElapsedMilliseconds;
+                long currentTime;
+                double deltaTime;
 
                 while (isMoving)
                 {
-                    long currentTime = stopwatch.ElapsedMilliseconds;
-                    double deltaTime = (currentTime - previousTime) / 1000.0;
+                    currentTime = stopwatch.ElapsedMilliseconds;
+                    deltaTime = (currentTime - previousTime) / 1000.0;
                     previousTime = currentTime;
 
                     velocityLength = Math.Sqrt(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
@@ -101,6 +103,9 @@ namespace TP.ConcurrentProgramming.Data
             double dy = Velocity.y * deltaTime;
 
             Position = new Vector(Position.x + dx, Position.y + dy);
+
+            Logger.Log($"Time: {DateTime.Now:HH:mm:ss.fff}, Ball@{GetHashCode()} Pos=({Position.x:F2}, {Position.y:F2}) Vel=({Velocity.x:F2}, {Velocity.y:F2})");
+
             RaiseNewPositionChangeNotification();
         }
 
