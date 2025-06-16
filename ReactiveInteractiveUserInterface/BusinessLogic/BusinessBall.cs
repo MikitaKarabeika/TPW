@@ -26,6 +26,7 @@ namespace TP.ConcurrentProgramming.BusinessLogic
         private Position _currentPosition;
         public Position CurrentPosition => _currentPosition;
         private const double Margin = 8;
+
         public Ball(Data.IBall ball)
         {
             _inner = ball;
@@ -33,13 +34,11 @@ namespace TP.ConcurrentProgramming.BusinessLogic
             Balls.Add(this);
             ball.NewPositionNotification += RaisePositionChangeEvent;
         }
-        
+
         private IVector CreateVector(double x, double y)
         {
             return DataAbstractAPI.GetDataLayer().CreateVector(x, y);
         }
-
-        #region IBall
 
         public event EventHandler<IPosition>? NewPositionNotification;
 
@@ -56,7 +55,6 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                 Parallel.ForEach(Balls, other =>
                 {
                     if (ReferenceEquals(this, other)) return;
-
                     if (other.CurrentPosition is null) return;
 
                     var key = _hash < other._hash ? (_hash, other._hash) : (other._hash, _hash);
@@ -66,8 +64,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic
 
                     if ((distSq < collisionDistance) && (InCollision.TryAdd(key, true)))
                     {
+                        SubmitCollision(_inner, other._inner);
                         BallCollision(_inner, other._inner);
-                        //_inner.SubmitSnapshotToLogger("Ball Collided with Ball#" + other._inner.GetHashCode());
                     }
                     else
                     {
@@ -76,15 +74,14 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                 });
 
                 bool isXOut = e.x < 0 || e.x > BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin;
-                bool isYOut = e.y < 0 || e.y > BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin;
-                
+                bool isYOut = e.y > BisAPI.GetDimensions.TableHeight - BisAPI.GetDimensions.BallDimension - Margin || e.y < 0;
+
                 if (isXOut || isYOut)
                 {
                     dataBall.Velocity = CreateVector(
                         isXOut ? -dataBall.Velocity.x : dataBall.Velocity.x,
                         isYOut ? -dataBall.Velocity.y : dataBall.Velocity.y
                     );
-                    //dataBall.SubmitSnapshotToLogger("Ball Collided with the Wall");
                 }
 
                 double boundedX = Math.Clamp(e.x, 0, BisAPI.GetDimensions.TableWidth - BisAPI.GetDimensions.BallDimension - Margin);
@@ -95,7 +92,18 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                 NewPositionNotification?.Invoke(this, _currentPosition);
             }
         }
-        
+
+        private void SubmitCollision(Data.IBall a, Data.IBall b)
+        {
+            var posA = a.CurrentPosition;
+            var velA = a.Velocity;
+            var posB = b.CurrentPosition;
+            var velB = b.Velocity;
+
+            a.SubmitCollisionSnapshot(b.GetHashCode(), posA, velA);
+            b.SubmitCollisionSnapshot(a.GetHashCode(), posB, velB);
+        }
+
         private void BallCollision(Data.IBall innerBall, Data.IBall otherBall)
         {
             if (innerBall == null || otherBall == null) return;
@@ -147,11 +155,8 @@ namespace TP.ConcurrentProgramming.BusinessLogic
                     otherBall.Velocity = CreateVector(
                         velB.x - ix / otherBall.Mass,
                         velB.y - iy / otherBall.Mass);
-                   
                 }
             }
         }
-
-        #endregion private
     }
 }

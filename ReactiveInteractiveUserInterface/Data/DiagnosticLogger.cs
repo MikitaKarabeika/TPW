@@ -10,20 +10,18 @@ namespace TP.ConcurrentProgramming.Data
     internal sealed class DiagnosticLogger
     {
         private static readonly Lazy<DiagnosticLogger> _instance = new(() => new DiagnosticLogger());
-
         public static DiagnosticLogger Instance => _instance.Value;
 
-        private readonly BlockingCollection<SnapshotSerializer.SerializedSnapshot> snapshotQueue;
+        private readonly BlockingCollection<LogEntry> snapshotQueue;
         private readonly Thread backgroundWriterThread;
         private readonly StreamWriter outputStream;
         private readonly SnapshotSerializer serializer;
         private readonly CancellationTokenSource cancelSource;
-
         private bool isFinished = false;
 
         private DiagnosticLogger()
         {
-            snapshotQueue = new BlockingCollection<SnapshotSerializer.SerializedSnapshot>(5000);
+            snapshotQueue = new BlockingCollection<LogEntry>(5000);
             cancelSource = new CancellationTokenSource();
             serializer = new SnapshotSerializer();
 
@@ -37,9 +35,9 @@ namespace TP.ConcurrentProgramming.Data
             {
                 try
                 {
-                    foreach (var snapshot in snapshotQueue.GetConsumingEnumerable(cancelSource.Token))
+                    foreach (var entry in snapshotQueue.GetConsumingEnumerable(cancelSource.Token))
                     {
-                        string line = serializer.SerializeToAscii(snapshot);
+                        string line = serializer.SerializeToAscii(entry);
                         bool written = false;
                         int wait = 25;
 
@@ -70,7 +68,7 @@ namespace TP.ConcurrentProgramming.Data
             backgroundWriterThread.Start();
         }
 
-        public void SubmitSnapshot(SnapshotSerializer.SerializedSnapshot snapshot)
+        public void SubmitSnapshot(LogEntry snapshot)
         {
             if (isFinished || snapshotQueue.IsAddingCompleted)
                 return;

@@ -8,28 +8,21 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using System;
 using System.Diagnostics;
-using System.IO;
+using System.Threading;
 using TP.ConcurrentProgramming.Data.Diagnostics;
 
 namespace TP.ConcurrentProgramming.Data
 {
     internal class Ball : IBall
     {
-        #region ctor
-
         internal Ball(Vector initialPosition, Vector initialVelocity, double mass)
         {
             Position = initialPosition;
             Velocity = initialVelocity;
             Mass = mass;
-
-            SubmitSnapshotToLogger("Ball created");
         }
-
-        #endregion ctor
-
-        #region IBall
 
         public event EventHandler<IVector>? NewPositionNotification;
 
@@ -55,27 +48,14 @@ namespace TP.ConcurrentProgramming.Data
         public IVector CurrentPosition => Position;
 
         public double Mass { get; }
-
         public double velocityLength;
-
-        #endregion IBall
-
-        #region private
 
         private IVector _velocity;
         private readonly object _velocityLock = new object();
         private readonly object _stateLock = new object();
         private volatile bool isMoving = true;
 
-        private void RaiseNewPositionChangeNotification()
-        {
-            NewPositionNotification?.Invoke(this, Position);
-        }
-
-        internal void Stop()
-        {
-            isMoving = false;
-        }
+        internal void Stop() => isMoving = false;
 
         internal void StartMoving()
         {
@@ -95,7 +75,6 @@ namespace TP.ConcurrentProgramming.Data
 
                     velocityLength = Math.Sqrt(Velocity.x * Velocity.x + Velocity.y * Velocity.y);
                     Move(deltaTime);
-
                     Thread.Sleep(10);
                 }
             }).Start();
@@ -114,24 +93,32 @@ namespace TP.ConcurrentProgramming.Data
                 Position = newPosition;
             }
 
-            SubmitSnapshotToLogger();
-
+            SubmitMovementSnapshot();
             RaiseNewPositionChangeNotification();
         }
 
-        private void SubmitSnapshotToLogger(string? comment = null)
+        private void SubmitMovementSnapshot()
         {
-            DiagnosticLogger.Instance.SubmitSnapshot(new SnapshotSerializer.SerializedSnapshot(
-                ballId: GetHashCode(),
-                measurementTime: DateTime.UtcNow,
-                positionX: Position.x,
-                positionY: Position.y,
-                velocityX: Velocity.x,
-                velocityY: Velocity.y,
-                comment: comment
+            SubmitSnapshotToLogger(new MovementLogEntry(
+                GetHashCode(), DateTime.UtcNow, Position, Velocity
             ));
         }
 
-        #endregion private
+        public void SubmitCollisionSnapshot(int otherBallId, IVector position, IVector velocity)
+        {
+            SubmitSnapshotToLogger(new CollisionLogEntry(
+                GetHashCode(), otherBallId, DateTime.UtcNow, position, velocity
+            ));
+        }
+
+        private void SubmitSnapshotToLogger(LogEntry entry)
+        {
+            DiagnosticLogger.Instance.SubmitSnapshot(entry);
+        }
+
+        private void RaiseNewPositionChangeNotification()
+        {
+            NewPositionNotification?.Invoke(this, Position);
+        }
     }
 }

@@ -8,6 +8,8 @@
 //
 //_____________________________________________________________________________________________________________________________________
 
+using TP.ConcurrentProgramming.Data;
+
 namespace TP.ConcurrentProgramming.BusinessLogic.Test
 {
   [TestClass]
@@ -35,12 +37,15 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
 
           public event EventHandler<Data.IVector>? NewPositionNotification;
 
+          public void SubmitCollisionSnapshot(int otherBallId, IVector position, IVector velocity) { }
+
+
           internal void Move()
           {
             NewPositionNotification?.Invoke(this, new VectorFixture(0.0, 0.0));
           }
 
-          public void SubmitSnapshotToLogger(string? comment = null) { }
+          //public void SubmitSnapshotToLogger(string? comment = null) { }
         }
 
         private class VectorFixture : Data.IVector

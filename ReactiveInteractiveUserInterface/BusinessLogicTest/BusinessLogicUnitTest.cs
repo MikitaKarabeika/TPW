@@ -133,7 +133,9 @@ namespace TP.ConcurrentProgramming.BusinessLogic.Test
 
         public event EventHandler<IVector>? NewPositionNotification = null;
 
-        public void SubmitSnapshotToLogger(string? comment = null) { }
+        public void SubmitCollisionSnapshot(int otherBallId, IVector position, IVector velocity) { }
+
+        //public void SubmitSnapshotToLogger(string? comment = null) { }
       }
     }
 

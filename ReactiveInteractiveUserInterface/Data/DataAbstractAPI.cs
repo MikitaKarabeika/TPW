@@ -56,12 +56,10 @@ namespace TP.ConcurrentProgramming.Data
 
   public interface IBall
   {
-        
     event EventHandler<IVector> NewPositionNotification;
     double Mass { get; }
     IVector Velocity { get; set; }
     IVector CurrentPosition { get; }
-    //void SubmitSnapshotToLogger(string? comment = null);
-
+    void SubmitCollisionSnapshot(int otherBallId, IVector position, IVector velocity);
   }
 }
