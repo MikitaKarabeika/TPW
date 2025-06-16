@@ -121,7 +121,7 @@ namespace TP.ConcurrentProgramming.Data
 
         private void SubmitSnapshotToLogger(string? comment = null)
         {
-            DiagnosticLogger.SubmitSnapshot(new SnapshotSerializer.SerializedSnapshot(
+            DiagnosticLogger.Instance.SubmitSnapshot(new SnapshotSerializer.SerializedSnapshot(
                 ballId: GetHashCode(),
                 measurementTime: DateTime.UtcNow,
                 positionX: Position.x,

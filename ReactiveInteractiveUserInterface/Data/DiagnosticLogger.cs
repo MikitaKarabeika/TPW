@@ -7,24 +7,31 @@ using TP.ConcurrentProgramming.Data.Diagnostics;
 
 namespace TP.ConcurrentProgramming.Data
 {
-    internal static class DiagnosticLogger
+    internal sealed class DiagnosticLogger
     {
-        private static BlockingCollection<SnapshotSerializer.SerializedSnapshot> snapshotQueue = new(5000);
-        private static Thread? backgroundWriterThread;
-        private static StreamWriter? outputStream;
-        private static SnapshotSerializer serializer = new();
-        private static CancellationTokenSource? cancelSource;
-        private static bool isFinished = false;
-        static DiagnosticLogger()
+        private static readonly Lazy<DiagnosticLogger> _instance = new(() => new DiagnosticLogger());
+
+        public static DiagnosticLogger Instance => _instance.Value;
+
+        private readonly BlockingCollection<SnapshotSerializer.SerializedSnapshot> snapshotQueue;
+        private readonly Thread backgroundWriterThread;
+        private readonly StreamWriter outputStream;
+        private readonly SnapshotSerializer serializer;
+        private readonly CancellationTokenSource cancelSource;
+
+        private bool isFinished = false;
+
+        private DiagnosticLogger()
         {
-            InitializeLogger();
-        }
-        private static void InitializeLogger()
-        {
+            snapshotQueue = new BlockingCollection<SnapshotSerializer.SerializedSnapshot>(5000);
             cancelSource = new CancellationTokenSource();
+            serializer = new SnapshotSerializer();
 
             string targetFile = Path.Combine(Path.GetDirectoryName(typeof(DiagnosticLogger).Assembly.Location)!, "ball_log.txt");
-            outputStream = new StreamWriter(targetFile, append: true, encoding: Encoding.ASCII) { AutoFlush = true };
+            outputStream = new StreamWriter(targetFile, append: true, encoding: Encoding.ASCII)
+            {
+                AutoFlush = true
+            };
 
             backgroundWriterThread = new Thread(() =>
             {
@@ -35,6 +42,7 @@ namespace TP.ConcurrentProgramming.Data
                         string line = serializer.SerializeToAscii(snapshot);
                         bool written = false;
                         int wait = 25;
+
                         while (!written && !cancelSource.IsCancellationRequested)
                         {
                             try
@@ -53,18 +61,16 @@ namespace TP.ConcurrentProgramming.Data
                 catch (OperationCanceledException) { }
                 finally
                 {
-                    try { outputStream?.Flush(); } catch { }
+                    try { outputStream.Flush(); } catch { }
+                    try { outputStream.Dispose(); } catch { }
                 }
-            })
-            {
-                IsBackground = true
-            };
+            });
 
+            backgroundWriterThread.IsBackground = true;
             backgroundWriterThread.Start();
-            isFinished = false;
         }
 
-        public static void SubmitSnapshot(SnapshotSerializer.SerializedSnapshot snapshot)
+        public void SubmitSnapshot(SnapshotSerializer.SerializedSnapshot snapshot)
         {
             if (isFinished || snapshotQueue.IsAddingCompleted)
                 return;
@@ -76,7 +82,7 @@ namespace TP.ConcurrentProgramming.Data
             catch (InvalidOperationException) { }
         }
 
-        public static void Finish()
+        public void Finish()
         {
             if (isFinished)
                 return;
@@ -84,10 +90,9 @@ namespace TP.ConcurrentProgramming.Data
             isFinished = true;
 
             try { snapshotQueue.CompleteAdding(); } catch { }
-            try { cancelSource?.Cancel(); } catch { }
-            try { backgroundWriterThread?.Join(); } catch { }
-            try { outputStream?.Dispose(); } catch { }
-            try { cancelSource?.Dispose(); } catch { }
+            try { cancelSource.Cancel(); } catch { }
+            try { backgroundWriterThread.Join(); } catch { }
+            try { cancelSource.Dispose(); } catch { }
         }
     }
 }
